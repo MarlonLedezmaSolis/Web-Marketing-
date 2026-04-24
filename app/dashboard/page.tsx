@@ -15,12 +15,13 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const { data: profile } = await supabase
+  const { data: profileData } = await supabase
     .from("profiles")
     .select("subscription_status")
     .eq("id", user!.id)
     .single();
 
+  const profile = profileData as { subscription_status: string } | null;
   const adsThisMonth = recentAds?.length ?? 0;
   const isPro = profile?.subscription_status === "active";
 

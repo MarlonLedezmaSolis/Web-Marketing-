@@ -37,11 +37,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Free tier check
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("subscription_status")
       .eq("id", user.id)
       .single();
+
+    const profile = profileData as { subscription_status: string } | null;
 
     if (profile?.subscription_status !== "active") {
       const { count } = await supabase
