@@ -51,5 +51,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // /auth/callback must be excluded so the route handler can exchange the code freely
   matcher: ["/dashboard/:path*", "/login", "/signup"],
+  // Note: /auth/callback is intentionally NOT matched — it handles its own session logic
 };

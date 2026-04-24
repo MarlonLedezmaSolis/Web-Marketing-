@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { UserPlus, CheckCircle2 } from "lucide-react";
 
+const SIGNUP_ERRORS: Record<string, string> = {
+  "User already registered": "Ya existe una cuenta con ese correo. ¿Querés iniciar sesión?",
+  "Password should be at least 6 characters": "La contraseña debe tener al menos 8 caracteres.",
+  "Unable to validate email address: invalid format": "El formato del correo no es válido.",
+};
+
+function friendlyError(raw: string): string {
+  return SIGNUP_ERRORS[raw] ?? raw;
+}
+
 export default function SignupPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,12 +45,13 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        // Apunta al callback route que intercambia el código por sesión
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
     if (authError) {
-      setError(authError.message);
+      setError(friendlyError(authError.message));
     } else {
       setSuccess(true);
     }
@@ -55,12 +64,14 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border border-green-100 bg-green-50 p-8 text-center shadow-sm">
           <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-600" />
-          <h2 className="text-2xl font-extrabold text-gray-900">
-            ¡Revisa tu correo!
-          </h2>
+          <h2 className="text-2xl font-extrabold text-gray-900">¡Revisa tu correo!</h2>
           <p className="mt-2 text-gray-600">
-            Te enviamos un enlace de confirmación a{" "}
-            <strong>{email}</strong>. Haz clic en él para activar tu cuenta.
+            Enviamos un enlace de confirmación a{" "}
+            <strong className="text-gray-800">{email}</strong>. Hacé clic en él para activar tu
+            cuenta y entrar directo al dashboard.
+          </p>
+          <p className="mt-3 text-sm text-gray-400">
+            Si no lo ves en unos minutos, revisá la carpeta de spam.
           </p>
           <Link href="/login">
             <Button variant="secondary" className="mt-6">
@@ -79,12 +90,8 @@ export default function SignupPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700">
             <UserPlus className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">
-            Crear cuenta gratis
-          </h1>
-          <p className="mt-1 text-gray-500">
-            Tus primeros 5 anuncios son completamente gratis
-          </p>
+          <h1 className="text-2xl font-extrabold text-gray-900">Crear cuenta gratis</h1>
+          <p className="mt-1 text-gray-500">Tus primeros 5 anuncios son completamente gratis</p>
         </div>
 
         <form onSubmit={handleSignup} className="space-y-5">
@@ -121,7 +128,12 @@ export default function SignupPage() {
 
           {error && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
+              {error}{" "}
+              {error.includes("Ya existe") && (
+                <Link href="/login" className="font-semibold underline">
+                  Ir al login
+                </Link>
+              )}
             </div>
           )}
 
